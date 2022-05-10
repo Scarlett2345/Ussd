@@ -5,7 +5,7 @@ include_once 'db.php';
 include_once 'user.php';
 include_once 'util.php';
 include_once 'sms.php';
-//include_once 'transaction.php';
+include_once 'transaction.php';
 
 //$IsRegistered = false;
 //!$IsRegistered = true;
@@ -46,7 +46,7 @@ if ($text == "" ) {
     case 2:
         $menu->NoMenu();
     break;
-    case 3:
+    case 3://FAQs
        echo "END You will receive an sms shortly. Thank you for your time" ;
        $sms = new Sms($user->getPhone());
        $message = "Thank you for your interest in our tree planting campaign.\n For answers to your most frequently asked questions visit\n https://bit.ly/3KHd4Vv";
@@ -64,7 +64,7 @@ if ($text == "" ) {
     case 1: 
         $menu->YesRegisteredMenu();
     break;
-    case 2:
+    case 2: //FAQs after registration
       echo "END You will receive an sms shortly. Thank you for your time" ;
       $sms = new Sms($user->getPhone());
       $message = "Thank you for your interest in our tree planting campaign.\n For answers to your most frequently asked questions visit\n https://bit.ly/3KHd4Vv";
@@ -106,13 +106,13 @@ if($level == 2 && !$user->IsUserRegistered($pdo) && $textArray1[1] == 3){
 //Login part plus program info and FAQs
 else if($level == 2){ 
   switch($textArray1[1]){
-    case 1: 
+    case 1: //Program info for both Yes and No
       echo "END You will receive an sms shortly. Thank you for your time";
       $sms = new Sms($user->getPhone());
       $message = "Thank you for your interest in our tree planting campaign.\n For our program info visit\n https://bit.ly/39JDIQR";
       $sms->sendSms($message);
     break;
-    case 2:
+    case 2: //FAQs for both Yes and No
       echo "END You will receive an sms shortly. Thank you for your time";
       $sms = new Sms($user->getPhone());
       $message = "Thank you for your interest in our tree planting campaign.\n For answers to your most frequently asked questions visit\n https://bit.ly/3KHd4Vv";
@@ -122,9 +122,9 @@ else if($level == 2){
       echo "CON Please enter your PIN:\n";
   } 
 
-}//code works till here
+}
 
-else if($level == 3 && $user->IsUserRegistered($pdo)){ 
+else if($level == 3 && $user->IsUserRegistered($pdo)){ // php hash comparison error
   //Pin verification
   if($user->correctPin($pdo)){
     echo "END Wrong PIN!";
@@ -132,7 +132,7 @@ else if($level == 3 && $user->IsUserRegistered($pdo)){
     $menu->AdoptionMenu();
   }
 
-}else if($level == 4 && $user->IsUserRegistered($pdo)){
+}else if($level == 4 && $user->IsUserRegistered($pdo)){ // this part of the cord works
   //this is the confirmation menu and mpesa prompt
   switch($textArray1[3]){
     case 1:
@@ -165,16 +165,18 @@ else if($level == 3 && $user->IsUserRegistered($pdo)){
     $response = "CON Confirm donation of Ksh " .$amount. " to our project \n";
     $response .= "1. Confirm";
     echo $response;
-  }else{
+  }
+else {
     switch($textArray1[4]){ 
       case 1:
         $amount = 1100;
         $newAmount = $user->checkAmount($pdo) + $amount;
-        $user->donated($pdo, $newAmount);
+        $txn = new Transaction($amount);
+        $txn->donated($pdo, $user->readUserId($pdo), $newAmount);
         $response = "END You will receive an mpesa prompt. Please enter your pin and you will receive an sms confirming you purchase";
         echo $response;
         $sms = new Sms($user->getPhone());
-        $message = "Dear " . $user->printName($pdo) . " Thank you for your donation of ". $user->getAmount() ." to plant ". $user->getAmount() / 11 ." trees. You are currently responsible for removing " . ($user->getAmount()/11) * 12.3 ." kg of CO2 from the atmosphere annually.\n https://www.fortrees.club/about";
+        $message = "Dear " . $user->printName($pdo) . " Thank you for your donation of ". $amount ." to plant ". $amount / 11 ." trees. You are currently responsible for removing " . ($amount/11) * 12.3 ." kg of CO2 from the atmosphere annually.\n https://www.fortrees.club/about";
         $sms->sendSms($message,$phoneNumber);  
       break;
       case 2:
